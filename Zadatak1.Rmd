@@ -1,0 +1,220 @@
+---
+title: "Zadatak1 - linearna regresija"
+author: "Marko Galavić"
+date: "`r Sys.Date()`"
+output: 
+  bookdown::html_document2: 
+    toc: yes
+    toc_title: "Sadržaj"
+    numbered: yes
+    toc-depth: 3
+    toc-float: yes
+---
+
+<style type="text/css">
+  body{
+  font-size: 12pt;
+}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE
+)
+```
+
+<!-- Treba instalirati R paket bookdown -->
+
+## Zadatak: Višestruka linearna regresija
+
+U zaglavlju upišite svoje ime i prezime pod *author: "Ime i prezime"*.
+
+U datoteci se nalazi skup podataka s kvantitativnom odzivnom varijablom `Y`, kvantitativnim prediktorima `X1`, `X2`, `X3`, `X4` i kvalitativnom varijablom `F1`.
+
+1. Učitajte podatke i prikažite osnovni sažetak varijabli.
+
+2. Prikažite barem dva prikladna grafička prikaza koji pokazuju povezanost odzivne varijable `Y` s prediktorima. Posebno komentirajte odnos `Y` s nekim kvantitativnim prediktorom i odnos `Y` s faktorom `F1`.
+
+3. Izračunajte korelacije između kvantitativnih prediktora. Postoje li prediktori koji su jako korelirani?
+
+4. Procijenite puni model
+$$Y \sim X1 + X2 + X3 + X4 + F1.$$
+Na temelju `summary()` funkcije komentirajte značajnost prediktora i vrijednosti $R^2$ i prilagođenog $R^2$.
+
+5. Izračunajte VIF vrijednosti za puni model. Postoji li problem kolinearnosti? Koji su prediktori problematični?
+
+6. Procijenite jednostavniji model u kojem izostavljate jedan od jako koreliranih prediktora. Usporedite modele pomoću prilagođenog $R^2$ i AIC-a.
+
+7. Procijenite model s interakcijom
+$$Y \sim X1 + X3 \cdot F1.$$
+Komentirajte značenje interakcijskog člana.
+
+8. Napišite procijenjenu jednadžbu odabranog modela i interpretirajte barem jedan koeficijent.
+
+9. Pomoću odabranog modela izračunajte predikciju za prva tri opažanja u skupu podataka.
+
+10. Prikažite dijagnostičke grafove reziduala za odabrani model i kratko komentirajte postoje li ozbiljni problemi s pretpostavkama linearne regresije.
+
+
+## Rješenje: 
+
+## 1. Učitavanje podataka i osnovni sažetak
+
+```{r}
+data <- read.csv("linreg_02.csv")
+
+str(data)
+summary(data)
+```
+
+Skup podataka sadrži odzivnu varijablu `Y`, četiri kvantitativna prediktora (`X1`, `X2`, `X3`, `X4`) te faktor `F1`.
+
+## 2. Grafički prikazi
+
+```{r}
+library(ggplot2)
+
+ggplot(data, aes(x = X1, y = Y)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_minimal()
+
+ggplot(data, aes(x = F1, y = Y, fill = F1)) +
+  geom_boxplot() +
+  theme_minimal()
+```
+
+
+Na prvom grafu vidi se negativna povezanost između varijabli `Y` i `X1`. Veće vrijednosti `X1` uglavnom su povezane s manjim vrijednostima odzivne varijable.
+
+Boxplot pokazuje razliku između razina faktora `F1`. Čini se da skupina A ima veće prosječne vrijednosti odziva `Y` od skupine B.
+
+## 3. Korelacije kvantitativnih prediktora
+
+```{r}
+cor(data[, c("X1", "X2", "X3", "X4")])
+```
+
+
+Najveća korelacija javlja se između `X1` i `X2`:
+Radi se o vrlo jakoj pozitivnoj korelaciji, što može uzrokovati problem multikolinearnosti.
+
+## 4. Puni model
+
+```{r}
+model_full <- lm(Y ~ X1 + X2 + X3 + X4 + F1, data = data)
+
+summary(model_full)
+```
+
+
+Dobiveni rezultati pokazuju:
+
+- značajne prediktore: `X1`, `X3` i `F1`
+- neznačajne prediktore: `X2` i `X4`
+
+Vrijednosti koeficijenta determinacije su približno:
+
+- \(R^2 = 0.763\)
+- prilagođeni \(R^2 = 0.758\)
+
+Model objašnjava oko 76 % varijabilnosti odzivne varijable.
+
+## 5. VIF analiza
+
+```{r}
+library(car)
+
+vif(model_full)
+```
+
+VIF vrijednosti za `X1` i `X2` iznose približno:
+
+- VIF(X1) = 13.7
+- VIF(X2) = 13.7
+
+Budući da su veće od 10, postoji ozbiljan problem multikolinearnosti između tih prediktora.
+
+## 6. Jednostavniji model
+
+Zbog vrlo visoke korelacije izostavljamo varijablu `X2`.
+
+```{r}
+model_red <- lm(Y ~ X1 + X3 + X4 + F1, data = data)
+
+summary(model_red)
+
+AIC(model_full)
+AIC(model_red)
+```
+
+### Usporedba modela
+
+Puni model ima Adj. R2 0.758 dok reducirani ima isto 0.758. AIC punog modela je 910.17 a AIC reduciranog modela je 908.96
+
+Reducirani model ima gotovo identičan prilagođeni \(R^2\), ali manji AIC, pa je poželjniji.
+
+## 7. Model s interakcijom
+
+```{r}
+model_int <- lm(Y ~ X1 + X3 * F1, data = data)
+
+summary(model_int)
+```
+
+
+Interakcijski član `X3:F1` ispituje razlikuje li se učinak varijable `X3` između skupina A i B.
+
+Procijenjeni koeficijent interakcije iznosi približno:
+
+\[
+\hat{\beta}_{X3:F1B} = -1.16
+\]
+
+To znači da je utjecaj varijable `X3` na odziv slabiji u skupini B nego u skupini A.
+
+## 8. Procijenjena jednadžba odabranog modela
+
+Odabrani model je reducirani model:
+
+```{r}
+coef(model_red)
+```
+
+Procijenjena jednadžba glasi:
+
+\[
+\hat Y =
+11.99
+-2.10X_1
++0.95X_3
+-0.02X_4
+-1.68I(F1=B)
+\]
+
+
+Koeficijent uz `X1` iznosi približno -2.10.
+
+Ako se vrijednost `X1` poveća za jednu jedinicu, očekivana vrijednost odziva `Y` smanjuje se za približno 2.10 jedinica uz nepromijenjene ostale prediktore.
+
+## 9. Predikcija za prva tri opažanja
+
+```{r}
+predict(model_red, newdata = data[1:3, ])
+```
+
+Dobivene predikcije su približno za opažanje 1 je 14.78, za opažanje 2 je 13.30 i za opažanje 3 je 8.95.
+
+## 10. Dijagnostički grafovi
+
+```{r}
+par(mfrow = c(2,2))
+plot(model_red)
+```
+
+
+Na temelju dijagnostičkih grafova: reziduali nemaju izražen obrazac, normalnost reziduala izgleda zadovoljavajuće, nema ozbiljnih odstupanja od homoskedastičnosti i nema velikog broja utjecajnih opažanja. Ne uočavaju se ozbiljna kršenja pretpostavki linearne regresije.
+
+

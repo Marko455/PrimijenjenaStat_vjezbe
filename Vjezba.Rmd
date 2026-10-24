@@ -1,0 +1,58 @@
+---
+title: "Vjezba"
+output: html_document
+---
+
+```{r}
+library(ISLR2)
+data(College)
+str(College)
+```
+
+```{r}
+summary(College)
+```
+
+```{r}
+contrast(College$Private)
+```
+
+```{r}
+pairs(College[, 2:9])
+```
+
+```{r}
+library(psych)
+cor.plot(College[, 2:18])
+```
+
+```{r, fig.width=12, fig.height=8}
+boxplot(Outstate ~ Private, data=College)
+boxplot(F.Undergrad ~ Private, data=College)
+boxplot(Top10perc ~ Private, data=College)
+```
+
+```{r}
+model_log1 <- glm(Private ~ Outstate + F.Undergrad + Room.Board + Top10perc,
+                  data = College, family=binomial)
+summary(model_log1)
+```
+
+```{r}
+model_log2 <- glm(Private ~ Outstate + F.Undergrad, data=College, family = binomial)
+summary(model_log2)
+```
+
+```{r}
+model_log3 <- glm(Private ~ Outstate + F.Undergrad + S.F.Ration + perc.alumni, family =binomial, data=College)
+sumamry(model_log3)
+```
+
+```{r}
+exp(coef(model_log3))
+```
+
+```{r}
+
+```
+

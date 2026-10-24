@@ -1,0 +1,215 @@
+---
+title: "Zadatak2 - klasifikacija"
+author: "Marko Galavić"
+date: "`r Sys.Date()`"
+output: 
+  bookdown::html_document2: 
+    toc: yes
+    toc_title: "Sadržaj"
+    numbered: yes
+    toc-depth: 3
+    toc-float: yes
+---
+
+<style type="text/css">
+  body{
+  font-size: 12pt;
+}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE
+)
+```
+
+<!-- Treba instalirati R paket bookdown -->
+
+## Zadatak: Klasifikacija metodom KNN
+
+U zaglavlju upišite svoje ime i prezime pod *author: "Ime i prezime"*.
+
+U datoteci se nalazi skup podataka s binarnom odzivnom varijablom `Y`, dvama kvantitativnim prediktorima `X1` i `X2` te varijablom `skup`, koja označava pripada li opažanje trening ili testnom skupu.
+
+1. Učitajte podatke i prikažite osnovni sažetak varijabli. Koliko opažanja pripada svakoj klasi varijable `Y`?
+
+2. Prikažite podatke na scatter plotu s prediktorom `X1` na osi x i prediktorom `X2` na osi y. Točke obojite prema vrijednosti varijable `Y`. Na temelju grafa kratko komentirajte čini li se da su klase dobro odvojene.
+
+3. Na temelju varijable `skup` podijelite podatke na trening i testni skup. Prije primjene KNN metode standardizirajte prediktore `X1` i `X2` koristeći sredine i standardne devijacije iz trening skupa.
+
+4. Provedite KNN klasifikaciju za $k=5$. Na testnom skupu izračunajte klasifikacijsku tablicu.
+
+5. Iz klasifikacijske tablice izračunajte:
+   - ukupnu točnost,
+   - osjetljivost,
+   - specifičnost.
+
+   Pretpostavite da je klasa `Yes` pozitivna klasa.
+
+6. Ponovite klasifikaciju za $k=15$. Usporedite rezultate za $k=5$ i $k=15$. Koji biste model odabrali i zašto?
+
+7. Napišite kratak zaključak: koliko je KNN klasifikator uspješan na ovom skupu podataka?
+
+
+## Uputa 
+
+Koristite paket `class`, koji sadrži funkciju `knn()`.
+
+```{r}
+library(class)
+```
+
+Nakon što podatke podijelite na trening i testni skup, možete izdvojiti prediktore i klase na sljedeći način:
+
+```{r, eval=FALSE}
+train <- podaci[podaci$skup == "train", ]
+test  <- podaci[podaci$skup == "test", ]
+
+X_train <- train[, c("X1", "X2")]
+X_test  <- test[, c("X1", "X2")]
+
+Y_train <- train$Y
+Y_test  <- test$Y
+```
+
+Standardizaciju prediktora napravite koristeći sredine i standardne devijacije iz trening skupa:
+
+```{r, eval=FALSE}
+centar <- apply(X_train, 2, mean)
+skala  <- apply(X_train, 2, sd)
+
+X_train_s <- scale(X_train, center = centar, scale = skala)
+X_test_s  <- scale(X_test, center = centar, scale = skala)
+```
+
+KNN klasifikaciju za, primjerice, k=1 možete provesti ovako:
+
+```{r, eval=FALSE}
+knn_5 <- knn(train = X_train_s, test = X_test_s, cl = Y_train, k = 5)
+```
+
+
+## Rješenje
+
+```{r}
+podaci <- read.csv("klasifikacija_08.csv")
+
+summary(podaci)
+table(podaci$Y)
+
+```
+
+Na temelju učitanog sadržaja:
+
+Klasa Yes: 97 opažanja
+
+Klasa No: 203 opažanja
+
+(ukupno 300 opažanja)
+
+## 2. Scatter plot
+```{r}
+plot(podaci$X1, podaci$X2, col = ifelse(podaci$Y=="Yes","red","blue"),
+     pch = 19, xlab="X1", ylab="X2")
+legend("topright", legend=c("Yes","No"), col=c("red","blue"), pch=19)
+
+```
+
+Vizualno se vidi da se klase značajno preklapaju.
+Npr. u dokumentu se pojavljuju i Yes i No vrijednosti u vrlo sličnim područjima:
+
+"1.3774,-0.6469,"Yes","train""
+"1.1339,-0.7475,"No","train""
+
+Granica nije linearna, što će rezultitari da KNN neće biti savršen.
+
+## 3.Podjela na trening i test
+```{r}
+train <- podaci[podaci$skup == "train", ]
+test  <- podaci[podaci$skup == "test", ]
+
+X_train <- train[, c("X1", "X2")]
+X_test  <- test[, c("X1", "X2")]
+
+Y_train <- train$Y
+Y_test  <- test$Y
+
+centar <- apply(X_train, 2, mean)
+skala  <- apply(X_train, 2, sd)
+
+X_train_s <- scale(X_train, center = centar, scale = skala)
+X_test_s  <- scale(X_test, center = centar, scale = skala)
+
+```
+
+## 4. KNN klasifikacija za k = 5
+
+```{r}
+library(class)
+
+knn_5 <- knn(train = X_train_s, test = X_test_s, cl = Y_train, k = 5)
+tab5 <- table(Predicted = knn_5, Actual = Y_test)
+tab5
+
+```
+
+## 5. Točnost, osjetljivost, specifičnost
+
+Pretpostavka: Yes = pozitivna klasa
+
+```{r}
+TP <- tab5["Yes","Yes"]
+TN <- tab5["No","No"]
+FP <- tab5["Yes","No"]
+FN <- tab5["No","Yes"]
+
+tocnost_5 <- (TP + TN) / sum(tab5)
+osjetljivost_5 <- TP / (TP + FN)
+specificnost_5 <- TN / (TN + FP)
+
+tocnost_5
+osjetljivost_5
+specificnost_5
+
+```
+
+## KNN klasifikacija za k = 15
+```{r}
+knn_15 <- knn(train = X_train_s, test = X_test_s, cl = Y_train, k = 15)
+tab15 <- table(Predicted = knn_15, Actual = Y_test)
+tab15
+
+```
+
+Izračun mjera:
+```{r}
+TP15 <- tab15["Yes","Yes"]
+TN15 <- tab15["No","No"]
+FP15 <- tab15["Yes","No"]
+FN15 <- tab15["No","Yes"]
+
+tocnost_15 <- (TP15 + TN15) / sum(tab15)
+osjetljivost_15 <- TP15 / (TP15 + FN15)
+specificnost_15 <- TN15 / (TN15 + FP15)
+
+tocnost_15
+osjetljivost_15
+specificnost_15
+```
+
+Usporedba:
+
+- k = 5 → daje manju pristranost, veću varijancu
+
+- k = 15 → glatkiji model, manje osjetljiv na šum
+
+U ovom datasetu klase se jako preklapaju, pa veći k često daje stabilnije rezultate.
+
+## 7. Zaključak
+KNN klasifikator na ovom skupu podataka postiže umjerenu točnost. Razlog je što se klase značajno preklapaju, što se vidi i u dokumentu:
+
+"-0.8213,-0.3618,"Yes","test""
+"-1.3226,-0.3627,"Yes","train""
+"-1.0159,-0.7733,"No","train""

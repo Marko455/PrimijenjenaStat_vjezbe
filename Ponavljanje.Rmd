@@ -1,0 +1,328 @@
+---
+title: "Ponavljanje"
+output: html_document
+---
+
+```{r}
+library(readxl)
+dijamanti <- read_xlsx("Diamonds.xlsx")
+str(dijamanti)
+```
+
+```{r}
+library(readxl)
+dijamanti <- read_xlsx("Diamonds.xlsx")
+str(dijamanti)
+```
+
+```{r}
+dijamanti$Color <- as.factor(dijamanti$Color)
+dijamanti$Clarity <- as.factor(dijamanti$Clarity)
+
+unique(dijamanti$Cut)
+dijamanti$Cut <- factor(dijamanti$Cut, levels = c("Good", "Very Good", "Excellent", "Ideal"), ordered = TRUE)
+```
+
+```{r}
+dijamanti$Color <- as.factor(dijamanti$Color)
+dijamanti$Color <- as.factor(dijamanti$Clarity)
+unique(dijamanti$Cut)
+dijamanti$Cut <- factor(dijamanti$Cut, levels = c("Good", "Very Good", "Excellent", "Ideal", ordered=TRUE))
+
+```
+
+```{r}
+summary(is.na(dijamanti))
+```
+
+```{r}
+summary(is.na(dijamanti))
+```
+
+```{r}
+library(psych)
+describe(dijamanti[, c(2, 5, 6, 9)])
+```
+
+```{r}
+library(psych)
+describe(dijamanti[, c(2,5,6,9)])
+```
+
+```{r}
+hist(dijamanti$Depth)
+```
+
+```{r}
+hist(dijamanti$Depth)
+```
+
+```{r}
+hist(dijamanti$Table)
+```
+
+```{r}
+hist(dijamanti$Table)
+```
+
+```{r}
+boxplot(dijamanti$Price ~ dijamanti$Color)
+```
+
+```{r}
+boxplot(dijamanti$Price ~ dijamanti$Color)
+```
+
+```{r}
+boxplot(dijamanti$Price ~ dijamanti$Clarity)
+```
+
+```{r}
+boxplot(dijamanti$Price ~ dijamanti$Clarity)
+```
+
+```{r}
+model <- lm(dijamanti$Price ~ dijamanti$Clarity, data = dijamanti)
+shapiro.test(model$residuals)
+```
+
+```{r}
+model <- lm(dijamanti$Price ~ dijamanti$Clarity, data = dijamanti)
+shapiro.test(model$residuals)
+```
+
+$H_0$ : Distribucije cijena se ne razlikuju s obzirom na jasnoću
+$H_1$ : Distriubcije cijena se razlikuju s obzirom na jasnoću
+
+```{r}
+kruskal.test(dijamanti$Price, dijamanti$Clarity)
+```
+
+```{r}
+kruskal.test(dijamanti$Price, dijamanti$Clarity)
+```
+
+```{r}
+library(rstatix)
+kruskal_effsize(dijamanti, dijamanti$Price ~ dijamanti$Clarity)
+```
+
+```{r}
+library(rstatix)
+kruskal_effsize(dijamanti, dijamanti$Price ~ dijamanti$Clarity)
+```
+
+```{r}
+DescTools::DunnTest(dijamanti$Price, dijamanti$Clarity)
+```
+
+```{r}
+DescTools::DunnTest(dijamanti$Price, dijamanti$Clarity)
+```
+
+```{r}
+plot(dijamanti$Carat.Size, dijamanti$Log.Price)
+```
+
+```{r}
+plot(dijamanti$Carat.Size, dijamanti$Log.Price)
+```
+
+```{r}
+id <- which(dijamanti$Carat.Size < 1.25)
+dijamanti_cor <- dijamanti[id, ]
+summary(dijamanti_cor)
+```
+
+```{r}
+id <- which(dijamanti$Carat.Size < 1.25)
+dijamanti_cor <- dijamanti[id, ]
+summary(dijamanti_cor)
+```
+
+```{r}
+plot(dijamanti_cor$Carat.Size ~ dijamanti_cor$Log.Price)
+```
+
+```{r}
+plot(dijamanti_cor$Carat.Size ~ dijamanti_cor$Log.Price)
+```
+
+```{r}
+cor(dijamanti_cor$Carat.Size, dijamanti_cor$Log.Price, method="pearson")
+cor(dijamanti_cor$Carat.Size, dijamanti_cor$Log.Price, method="spearman")
+# koeficijent korelacije
+# smjer - pozitivan (x raste -> y raste)
+#intenzitet - snažna veza (veća od 0.7)
+```
+
+```{r}
+cor(dijamanti_cor$Carat.Size, dijamanti_cor$Log.Price, method ="pearson")
+cor(dijamanti_cor$Carat.Size, dijamanti_cor$Log.Price, method="spearman")
+```
+
+```{r}
+mjlr <- lm(dijamanti_cor$Log.Price ~ dijamanti_cor$Carat.Size, data = dijamanti_cor)
+plot(mjlr)
+```
+
+```{r}
+mjlr <- lm(dijamanti_cor$Log.Price ~ dijamanti_cor$Carat.Size, data = dijamanti_cor)
+plot(mjlr)
+```
+
+Q-Q dijagram za provjera normalnosti
+Scale - Location - uvid u heteroskedastičnost 
+
+```{r}
+shapiro.test(mjlr$residuals)
+# W - vrijednost testa
+# p-value - uvijet normalnosti
+```
+
+```{r}
+shapiro.test(mjlr$residuals)
+```
+
+```{r}
+library(lmtest)
+bptest(dijamanti_cor$Log.Price ~ dijamanti_cor$Carat.Size)  #test homoskedastičnosti
+```
+Model se odbacuje zbog nezadovoljene pretpostavke o homoskedastičnosti
+
+```{r}
+library(lmtest)
+bptest(dijamanti_cor$Log.Price ~ dijamanti_cor$Carat.Size)
+```
+
+```{r}
+id <- c(1301, 1387, 1486)
+dijamanti_cor[]
+```
+
+```{r}
+library(readxl)
+letovi <- read_xlsx("letovi.xlsx")
+```
+
+```{r}
+library(readxl)
+letovi <- read_xlsx("letovi.xlsx")
+```
+
+```{r}
+unique(letovi$year)
+```
+
+```{r}
+unique(letovi$year)
+```
+
+```{r}
+letovi_mini <- data.frame(
+  mj = letovi$month,
+  odstupanje_pol = letovi$dep_delay,
+  odstupanje_dol = letovi$arr_delay,
+  prijevoznik = letovi$carrier,
+  pol = letovi$origin,
+  odr = letovi$dest,
+  trajanje_leta = letovi$air_time,
+  udaljenost = letovi$distance,
+  vrijeme = letovi$time_hour
+)
+
+op <- seq(1, length(letovi_mini$mj), 1)
+id <- sample(op, 2000)
+letovi_mini <- letovi_mini[id, ]
+str(letovi_mini)
+```
+
+```{r}
+letovi_mini <- data.frame(
+  mj=letovi$month,
+  odstupanje_pol = letovi$dep_delay,
+  odstupanje_dol = letovi$arr_delay,
+  prijevoznik = letovi$carrier,
+  pol = letovi$origin,
+  odr = letovi$dest,
+  trajanje_leta = letovi$air_time,
+  udaljenost = letovi$distance,
+  vrijeme = letovi$time_hour
+)
+op <- seq(1, length(letovi_mini$mj),1)
+id <- sample(op, 2000)
+letovi_mini <- letovi_mini[id, ]
+str(letovi_mini)
+```
+
+```{r}
+letovi_mini$prijevoznik <- as.factor(letovi_mini$prijevoznik)
+letovi_mini$pol <- as.factor(letovi_mini$pol)
+letovi_mini$odr <- as.factor(letovi_mini$odr)
+
+letovi_mini$trajanje_leta <- as.double(letovi_mini$trajanje_leta)
+letovi_mini$udaljenost <- as.double(letovi_mini$udaljenost)
+
+letovi_mini_vrijeme <- as.POSIXct(letovi_mini$vrijeme, tz = " ", tryFormat="%Y-$m-%d %H:%M:%OS")
+str(letovi_mini)
+```
+
+```{r}
+letovi_mini$prijevoznik <- as.factor(letovi_mini$prijevoznik)
+letovi_mini$pol <- as.factor(letovi_mini$pol)
+letovi_mini$odr <- as.factor(letovi_mini$odr)
+
+letovi_mini$trajanje_leta <- as.double(letovi_mini$trajanje_leta)
+letovi_mini$udaljenost <- as.double(letovi_mini$udaljenost)
+
+letovi_mini_vrijeme <- as.POSIXct(letovi_mini$vrijeme, tz="", tryFormat=)
+```
+
+```{r}
+library(psych)
+describe(letovi_mini[, c(2:3, 7:8)])[ , c(2:5, 8:9, 11, 12)]
+```
+
+```{r}
+describe(letovi_mini[, c(2:3, 7:8)])[, c(2:5, 8:9, 11, 12)]
+```
+
+```{r}
+hist(letovi_mini$odstupanje_pol)
+```
+
+
+```{r}
+hist(letovi_mini$odstupanje_dol)
+```
+
+```{r}
+```
+
+
+```{r}
+boxplot(letovi_mini$odstupanje_dol ~ letovi_mini$prijevoznik)
+```
+
+```{r}
+summary(is.na(letovi_mini))
+id <- which(is.na(letovi_mini$odstupanje_pol))
+letovi_mini <- letovi_mini[-id,]
+
+id <- which(is.na(letovi_mini$odstupanje_dol))
+letovi_mini <- letovi_mini[-id,]
+summary(is.na(letovi_mini))
+```
+
+```{r}
+plot(letovi_mini$udaljenost, letovi_mini$trajanje_leta)
+```
+
+```{r}
+cor(letovi_mini$udaljenost, letovi_mini$odstupanje_dol)
+```
+
+```{r}
+model <- lm(letovi_mini$trajanje_leta ~ letovi_mini$udaljenost, data = letovi_mini)
+```
+

@@ -1,0 +1,166 @@
+---
+title: "Zadatak3 - glm"
+author: "Marko Galavić"
+date: "`r Sys.Date()`"
+output: 
+  bookdown::html_document2: 
+    toc: yes
+    toc_title: "Sadržaj"
+    numbered: yes
+    toc-depth: 3
+    toc-float: yes
+---
+
+<style type="text/css">
+  body{
+  font-size: 12pt;
+}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE
+)
+```
+
+<!-- Treba instalirati R paket bookdown -->
+
+## Zadatak: Generalizirani linearni model
+
+U zaglavlju upišite svoje ime i prezime pod *author: "Ime i prezime"*.
+
+U datoteci se nalazi skup podataka s odzivnom varijablom `Y` i prediktorima `X1`, `X2`, `X3`, `X4` i `F1`. Varijabla `F1` je kvalitativna varijabla. Cilj je procijeniti prikladan generalizirani linearni model i interpretirati dobivene rezultate.
+
+Ako je odzivna varijabla `Y` binarna, koristite logističku regresiju. Ako je odzivna varijabla `Y` brojevna varijabla, koristite Poissonovu regresiju.
+
+1. Učitajte podatke i prikažite osnovni sažetak varijabli. Kratko komentirajte kakvog je tipa odzivna varijabla `Y` i koji ćete model koristiti.
+
+2. Napravite barem jedan prikladan grafički prikaz koji pokazuje povezanost odzivne varijable `Y` s nekim od prediktora.
+
+3. Procijenite puni generalizirani linearni model oblika
+$$Y \sim X1 + X2 + X3 + X4 + F1.$$
+
+4. Na temelju funkcije `summary()` komentirajte koji su prediktori statistički značajni, a koji nisu.
+
+5. Procijenite reducirani model u kojem izostavljate prediktor koji nije statistički značajan. Usporedite puni i reducirani model pomoću AIC vrijednosti. Koji biste model odabrali?
+
+6. Napišite procijenjenu jednadžbu odabranog modela na odgovarajućoj skali:
+   - za logističku regresiju na logit-skali,
+   - za Poissonovu regresiju na log-skali.
+
+7. Interpretirajte barem jedan koeficijent iz odabranog modela. Izračunajte i interpretirajte vrijednost $e^{\hat\beta}$.
+
+8. Pomoću odabranog modela izračunajte predikcije za prva tri opažanja u skupu podataka. Koristite `predict(..., type = "response")` i objasnite što dobivene vrijednosti znače.
+
+9. Ako koristite Poissonovu regresiju, dodatno izračunajte omjer
+$$\frac{\mathrm{deviance}}{\mathrm{df.residual}}$$
+i kratko komentirajte postoji li naznaka prekomjerne disperzije.
+
+
+## Uputa
+
+U R-u logističku regresiju provodimo pomoću
+
+```{r, eval=FALSE}
+model <- glm(Y ~ X1 + X2 + X3 + X4 + F1, data = podaci, family = binomial)
+```
+
+Poissonovu regresiju provodimo pomoću
+
+```{r, eval=FALSE}
+model <- glm(Y ~ X1 + X2 + X3 + X4 + F1, data = podaci, family = poisson)
+```
+
+Procijenjene vrijednosti na originalnoj skali dobivamo pomoću
+
+```{r, eval=FALSE}
+predict(model, type = "response")
+```
+
+
+## Rješenje
+
+## 1. Učitavanje podataka i sažetak
+
+```{r, message=FALSE}
+podaci <- read.csv("glm_pois_02.csv")
+
+str(podaci)
+summary(podaci)
+table(podaci$Y)
+
+```
+
+- `Y` je cijelobrojna varijabla (0, 1, 2, …), dakle radi se o broju događaja.  
+- Nije binarna, pa je prikladan **Poissonov GLM** s log-link funkcijom.
+
+---
+
+### 2. Grafički prikaz povezanosti Y s prediktorom
+
+odnos `Y` i `X1`.
+```{r graf}
+plot(podaci$X1, podaci$Y,
+     xlab = "X1", ylab = "Y",
+     main = "Povezanost Y i X1")
+
+```
+
+```{r boxplot}
+boxplot(Y ~ F1, data = podaci,
+        xlab = "F1", ylab = "Y",
+        main = "Y po razinama faktora F1")
+
+```
+
+## 3. Puni Poissonov GLM
+```{r}
+model_full <- glm(Y ~ X1 + X2 + X3 + X4 + F1,
+                  data = podaci,
+                  family = poisson)
+
+summary(model_full)
+```
+Statistički značajni prediktori oni s `Pr(>|z|) < 0.05`  
+- **Nije značajan:** `Pr(>|z|)` veći od 0.05 
+Prediktori X1, X2, X3 i F1 su statistički značajni (p < 0.05), dok X4 nije (p > 0.05).
+
+## 5. Reducirani model i usporedba AIC
+```{r}
+model_red <- glm(Y ~ X1 + X2 + X3 + F1,
+                 data = podaci,
+                 family = poisson)
+
+summary(model_red)
+
+AIC(model_full)
+AIC(model_red)
+```
+
+Bolji model onaj s manjim AIC. Usporedbom AIC vrijednosti, reducirani model ima manji AIC, pa ga odabiremo kao prikladniji.  
+
+## 6. Jednadžba odabranog modela na log-skali
+
+Za Poissonov GLM:
+
+\[
+\log(\mathbb{E}[Y \mid X]) = \beta_0 + \beta_1 X1 + \beta_2 X2 + \beta_3 X3 + \beta_4 X4 + \beta_{F1,B} \cdot I(F1 = "B")
+\]
+
+## 8. Predikcije za prva tri opažanja
+```{r}
+preds <- predict(model_red, type = "response")
+head(preds, 3)
+```
+Model predviđa da je očekivani broj događaja Y za prvo opažanje 4.869, za drugo 4.700 i treće je 3.112
+
+## 9. Provjera prekomjerne disperzije
+```{r}
+model_red$deviance
+model_red$df.residual
+disp_ratio <- model_red$deviance / model_red$df.residual
+disp_ratio
+```
+

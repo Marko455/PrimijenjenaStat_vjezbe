@@ -1,0 +1,152 @@
+---
+title: "Zadatak4 - ponovno uzorkovanje"
+author: "Marko Galavić"
+date: "`r Sys.Date()`"
+output: 
+  bookdown::html_document2: 
+    toc: yes
+    toc_title: "Sadržaj"
+    numbered: yes
+    toc-depth: 3
+    toc-float: yes
+---
+
+<style type="text/css">
+  body{
+  font-size: 12pt;
+}
+</style>
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  warning = FALSE,
+  message = FALSE
+)
+```
+
+<!-- Treba instalirati R paket bookdown -->
+
+## Zadatak: Metode ponovnog uzorkovanja
+
+U zaglavlju upišite svoje ime i prezime pod *author: "Ime i prezime"*.
+
+U datoteci se nalazi skup podataka s kvantitativnom odzivnom varijablom `Y`, kvantitativnim prediktorima `X1` i `X2` te kvalitativnom varijablom `F1`. Cilj zadatka je primijeniti dvije metode ponovnog uzorkovanja: cross-validation i bootstrap.
+
+### A. Cross-validacija
+
+1. Učitajte podatke i prikažite osnovni sažetak varijabli.
+
+2. Nacrtajte scatter plot varijabli `X1` i `Y`. Kratko komentirajte vidi li se moguća nelinearna veza između tih varijabli.
+
+3. Procijenite dva regresijska modela:
+
+$$M_1:\quad Y \sim X1 + X2,$$
+
+$$M_2:\quad Y \sim X1 + I(X1^2) + X2.$$
+
+4. Pomoću 5-struke ili 10-struke cross-validacije procijenite predikcijsku pogrešku za oba modela. Kao mjeru pogreške koristite MSE.
+
+5. Usporedite dobivene cross-validacijske pogreške. Koji biste model odabrali i zašto?
+
+
+### B. Bootstrap
+
+6. Promatrajte razliku aritmetičkih sredina varijable `Y` između dviju skupina određenih varijablom `F1`.
+
+Ako varijabla `F1` ima vrijednosti `A` i `B`, tada promatramo statistiku
+
+$$\hat{\theta}=\bar{Y}_B-\bar{Y}_A,$$
+
+gdje je $\bar{Y}_B$ aritmetička sredina varijable `Y` u skupini `F1 = B`, a $\bar{Y}_A$ aritmetička sredina varijable `Y` u skupini `F1 = A`.
+
+Izračunajte tu razliku na originalnom uzorku.
+
+7. Pomoću bootstrapa procijenite standardnu pogrešku statistike
+
+$$\hat{\theta}=\bar{Y}_B-\bar{Y}_A.$$
+
+Možete koristiti ručni bootstrap ili funkciju `boot()` iz paketa `boot`.
+
+8. Prikažite histogram bootstrap vrijednosti statistike $\hat{\theta}^*$.
+
+9. Izračunajte približni 95% bootstrap interval pouzdanosti pomoću kvantila bootstrap distribucije.
+
+10. Kratko interpretirajte dobiveni interval pouzdanosti. Sadrži li interval vrijednost 0? Što to govori o razlici sredina između skupina `F1 = A` i `F1 = B`?
+
+
+## Uputa
+
+Za cross-validaciju možete koristiti paket `boot`.
+
+```{r, eval=FALSE}
+library(boot)
+```
+
+Primjer oblika funkcije za bootstrap razlike sredina:
+
+```{r, eval=FALSE}
+stat_fun <- function(data, index) {
+  d <- data[index, ]
+  mean(d$Y[d$F1 == "B"]) - mean(d$Y[d$F1 == "A"])
+```
+
+Funkcija boot() zatim više puta uzorkuje retke podataka i svaki put računa zadanu statistiku.
+
+
+## Rješenje
+
+## CROSS validacija
+```{r}
+library(ggplot2)
+```
+
+
+## 1. Učitavanje podataka i osnovni sažetak
+
+```{r}
+dat <- read.csv("resampling_06.csv")
+
+str(dat)
+summary(dat)
+table(dat$F1)
+
+```
+
+
+# 2. Scatter plot X1 i Y
+
+```{r}
+ggplot(dat, aes(x = X1, y = Y)) +
+  geom_point() +
+  theme_minimal()
+
+```
+Postoji veća zakrivljenost koja ukazuje na nelinearnost veze između X1 i Y
+
+## 3. Procjena dvaju regresijskih modela
+```{r}
+M1 <- glm(Y ~ X1 + X2, data = dat)
+
+M2 <- glm(Y ~ X1 + I(X1^2) + X2, data = dat)
+
+summary(M1)
+summary(M2)
+
+```
+
+## Bootstrap
+
+## 6. Razlika sredina Y između skupina F1 = B i F1 = A
+```{r}
+mean_A <- mean(dat$Y[dat$F1 == "A"])
+mean_B <- mean(dat$Y[dat$F1 == "B"])
+theta_hat <- mean_B - mean_A
+
+mean_A
+mean_B
+theta_hat
+
+```
+
+
